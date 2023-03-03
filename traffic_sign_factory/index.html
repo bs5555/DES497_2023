@@ -4,20 +4,33 @@
     <title>Traffic Sign Factory</title>
     <link rel="icon" href="res/favicon.svg" type="image/svg+xml">
     <script src="res/jquery.js"></script>
+    <script src="res/rat.js"></script>
+    <script src="res/ratking.js"></script>
     <script>
 
-    var stuff =
-  {
-    'Better' :      ['Worser','Greater','Smaller'],
-    'be' :          ['be','not to be','having fun'],
-    'a Samurai' :   ['a Samurai','no one','a Gardener','yourself'],
-    'in a Garden' : ['in a Garden','in the Heaven','nowhere','at War'],
-    'than' :        ['than']
-  };
+    var numberOfGlyphs = 6;
 
-    console.log(stuff);
+    function getRatkingSentence()
+    {
+      var nRatKing = rnd(0, ratKing.length);
+      return(ratKing[nRatKing]);
+    }
 
-    var numberOfGlyphs = 5;
+    function getRatSentence()
+    {
+      var nRat = rnd(0, rats.length-1);
+      var sentence = rats[nRat];
+      var res = '';
+      Object.keys(sentence).forEach(function(key)
+      {
+       var word = rnd(0,sentence[key].length-1);
+       res = res + sentence[key][word]+' ';
+      })
+      return(res);
+    }
+
+
+
 
     function rnd(min, max)
     {
@@ -46,16 +59,17 @@
         {
           //random sentence
           $('.text').css('opacity',1);
-          $('.text').html('You killed a rat');
+          $('.text').html(getRatSentence());
+
         }
         if(sentence >= 80)
         {
           //rat-king sentence
           $('.text').css('opacity',1);
-          $('.text').html('Rat King killed you.');
+          $('.text').html(getRatkingSentence());
         }
 
-        console.log(sentence);
+
         switch(randomSignBase)
         {
           case 1 :
