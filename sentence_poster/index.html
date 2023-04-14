@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Sentence Tuner</title>
+    <style>
+
+      @font-face {
+  font-family: "archivo";
+  src: local("archivo"),
+    url("res/archivo.ttf") format("truetype");
+}
+
+body{font-family:'archivo';}
+
+div.grid{display:grid; grid-template-columns:repeat(10,1fr);
+  position:absolute; top:0; left:0; right:0; bottom:0;
+}
+div.sentence{font-size:4em; color:#333; position:absolute; transform:translate(-50%,-50%);
+  white-space:nowrap;
+  background:rgba(0,100,255,0.3);}
+
+div.element{border:1px solid #eee;}
+
+    </style>
+    <script src="res/jquery.js"></script>
+    <script>
+$(document).ready(function(){
+
+ var grid = $('#grid');
+ var sen = $('#sen');
+ for(y=0; y<10; y++)
+ {
+   for(x=0; x<10; x++)
+   {
+     let element = $('<div class="element" data-x="'+x+'" data-y="'+y+'"></div>').on('mouseenter',function(e){
+       console.log('coucou');
+       let text = sentence($(this).attr('data-x'),$(this).attr('data-y'));
+       sen.text(text);
+     });
+     grid.append(element);
+   }
+ }
+
+
+ $(window).on('mousemove',function(e){
+   //let wght = 100; //100 - 900
+   //let wdth = 200; //62 - 125
+   //800 : width = x : e.client.X
+   let x = ((e.clientX*800.0)/$(window).width())+100;
+   let y = ((e.clientY*63)/$(window).height())+62;
+
+   sen.css({left:e.clientX+'px',top:e.clientY+'px','font-variation-settings':'"wght" '+x+', "wdth" '+y});
+
+ });
+
+ function sentence(x,y)
+ {
+   let samurai = ['carrot','rabbit','fox','bear','hunter','policeman','politican','prophet','god','satan'];
+   let garden = ['in the garden','in the forest','in the village','in the city','in the battlefield','in the apocalypse','in the heaven','in the Pandemonium','in the Void','in the hell'];
+   return('better be '+samurai[x]+' '+garden[y]);
+ }
+
+
+});
+
+    </script>
+  </head>
+  <body>
+
+<div class="sentence" id="sen">Better be a samurai</div>
+<div class="grid" id="grid"></div>
+
+
+  </body>
+</html>
