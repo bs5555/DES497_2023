@@ -5,6 +5,9 @@ class Facetracker
   float y = height/2;
   Capture video;
   OpenCV opencv;
+  PVector location = new PVector(width/2,height/2);
+  PVector velocity = new PVector(0,0);
+  PVector acceleration = new PVector(0,0);
   
   Facetracker(PApplet _app)
   {
@@ -51,10 +54,36 @@ class Facetracker
     }
     if(index >= 0)
     {
-      x = faces[index].x+(faces[index].width/2);
-      y = faces[index].y+(faces[index].height/2);
-      x = lerp(video.width,width,x/video.width);
-      y = lerp(video.height,height,y/video.height);
+      PVector face = new PVector(0,0);
+      
+      face.x = faces[index].x+(faces[index].width/2);
+      face.y = faces[index].y+(faces[index].height/2);
+      
+      pushMatrix();
+        translate(face.x,face.y);
+        fill(color(100,100,255,100));
+        circle(0,0,50);
+      popMatrix();
+      
+      face.x = lerp(0,width,face.x/video.width);
+      face.y = lerp(0,height,face.y/video.height);
+      
+      //face.x=mouseX;
+      //face.y=mouseY;
+      
+      pushMatrix();
+        translate(face.x,face.y);
+        fill(color(100,100,255,100));
+        circle(0,0,50);
+      popMatrix();
+      
+      this.acceleration = PVector.sub(face,this.location);
+      float d = acceleration.mag();
+      this.acceleration.normalize();
+      this.acceleration.mult(d);
+      this.velocity.add(acceleration);
+      velocity.limit(width/100.0);
+      this.location.add(this.velocity);
     }
     
   }
@@ -62,7 +91,7 @@ class Facetracker
   void display()
   {
     pushMatrix();
-      translate(x,y);
+      translate(this.location.x,this.location.y);
       fill(color(255,0,0,100));
       circle(0,0,50);
     popMatrix();
