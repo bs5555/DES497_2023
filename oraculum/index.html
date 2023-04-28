@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>oraculum</title>
+  <link rel="icon" href="res/favicon.svg" type="image/svg+xml">
+  <style>
+    @font-face {
+        font-family: 'averia';
+        src: url('res/averia-webfont.woff2') format('woff2'),
+             url('res.averia-webfont.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
+
+    }
+
+body{margin:0; padding:0; font-family:'averia','Times New Roman',serif;}
+video.bg{width:100%; height:100vh; object-fit:cover; display:block;}
+div.holder{position:fixed; top:0; right:0; bottom:0; left:0; z-index:10000; display:grid;}
+div.oracle{font-size:10vw; color:#fff; justify-self:center; align-self:center; padding:5vw;
+  text-align:center; opacity:0; transform:scale(0.001);
+  text-shadow: 9px 9px 0px #000000, -3px -3px 0px #000000;
+  transition:all 1.5s;
+}
+div.oracle.show{opacity:1; transform:scale(1);}
+div.oracle.hide{opacity:0; transform:scale(10);}
+
+  </style>
+  <script src="res/jquery.js"></script>
+  <script src="res/sentence.js"></script>
+  <script>
+  var frameRate;
+  var vid;
+  var fc;
+
+  function rnd(min, max)
+  {
+    return(Math.floor(Math.random() * (max - min + 1) + min));
+  }
+  function getRatSentence()
+    {
+      var nRat = rnd(0, rats.length-1);
+      var sentence = rats[nRat];
+      var res = '';
+      Object.keys(sentence).forEach(function(key)
+      {
+       var word = rnd(0,sentence[key].length-1);
+       res = res + sentence[key][word]+' ';
+      })
+      return(res);
+    }
+
+  function getCurrentVideoFrame()
+  {
+    let curTime = vid.currentTime;
+    return(Math.floor(curTime*frameRate));
+  }
+  $(document).ready(function(){
+    frameRate=24;
+    vid = document.getElementById('video');
+    fc = 0;
+    vid.onplaying = function(){
+      setInterval(function() {
+         fc = getCurrentVideoFrame();
+         //console.log(fc);
+         if(fc==0)
+         {
+           let sentence =  getRatSentence();
+           $('#oracle').text(sentence).removeClass('hide');
+         }
+         if(fc==487)
+         {
+           $('#oracle').addClass('show');
+         }
+         if(fc==760)
+         {
+           $('#oracle').removeClass('show').addClass('hide');
+         }
+      }, (1000 / frameRate));
+    };
+  });
+
+  </script>
+</head>
+<body>
+
+<video loop="true" autoplay="true" muted="true" class="bg" id="video">
+  <source src="res/fortune_small.mp4" type="video/mp4">
+</video>
+
+<div class="holder">
+  <div class="oracle" id="oracle">You will rise up in the near future</div>
+</div>
+
+</body>
+</html>
