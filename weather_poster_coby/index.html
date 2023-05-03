@@ -8,15 +8,72 @@
 
   var canvas = false;
   var ctx = false;
+  var nCirc = 100;
+  var circles = new Array();
+  var wind_angle = 36.0;
+  var wind_speed = 6.0;
+  for(var i=0; i<100; i++)
+  {
+    circles[i]={
+      loc:{
+        x:Math.random()*1000.0,
+        y:Math.random()*1000.0
+      },
+      r:Math.random()*50.0,
+      velocity:{
+        x:0.0,
+        y:0.0
+      },
+      acceleration:{
+        x:0.0,
+        y:0.0
+      },
+      topSpeed:(Math.random()*5.0)+2.0
+    }
+  }
+
+function rotate(vec,angle)
+{
+  res=vec;
+  angle = angle * (Math.PI/180);
+  res.x=(Math.cos(angle)*vec.x)-(Math.sin(angle)*vec.y);
+  res.y=(Math.sin(angle)*vec.x)+(Math.cos(angle)*vec.y);
+  return(res);
+  //𝑥2=cos𝛽𝑥1−sin𝛽𝑦1𝑦2=sin𝛽𝑥1+cos𝛽𝑦1
+}
+
+function limitate(vec,limit)
+{
+  res = vec;
+  let d  = Math.sqrt((vec.x * vec.x)+(vec.y * vec.y));
+  if(d > limit)
+  {
+    res.x=(limit*vec.x)/d;
+    res.y=(limit*vec.y)/d;
+  }
+  return(res);
+}
 
 function _draw()
 {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for(var i=0; i<100; i++)
+  //console.log(circles[0]);
+  for(var i=0; i<nCirc; i++)
   {
+    circles[i].acceleration=rotate({x:0,y:(circles[i].r/100.0)*wind_speed},wind_angle);
+    circles[i].velocity.x=circles[i].velocity.x+circles[i].acceleration.x;
+    circles[i].velocity.y=circles[i].velocity.y+circles[i].acceleration.y;
+    circles[i].velocity=limitate(circles[i].velocity,circles[i].topSpeed);
+    circles[i].loc.x=circles[i].loc.x+circles[i].velocity.x;
+    circles[i].loc.y=circles[i].loc.y+circles[i].velocity.y;
+    if(circles[i].loc.x < -100) circles[i].loc.x = canvas.width+100;
+    if(circles[i].loc.y < -100) circles[i].loc.y = canvas.height+100;
+    if(circles[i].loc.x > canvas.width+100) circles[i].loc.x = -99;
+    if(circles[i].loc.y > canvas.height+100) circles[i].loc.y = -99;
+
     ctx.beginPath();
-    ctx.arc(Math.random()*1000, Math.random()*1000, Math.random()*100, 0, 2 * Math.PI, false);
-    ctx.strokeStyle = '#003300';
+    ctx.arc(circles[i].loc.x, circles[i].loc.y, circles[i].r, 0, 2 * Math.PI, false);
+    ctx.strokeStyle = '#ffffff';
     ctx.stroke();
   }
 
@@ -33,10 +90,20 @@ function _draw()
         /*headers : heads,*/
         success: function(response){
           console.log(response);
-          console.log(response.weather[0].id);
-          console.log(response.weather[0].description);
+          //console.log(response.weather[0].id);
+          //console.log(response.weather[0].description);
+          console.log(response.main.temp);
+          let temp = (response.main.temp-214.0)/110.0;
+          let endcolor = (temp*225.0);
+          let startcolor = response.wind.speed;
+          $('#bgcolors').text(':root{--start:'+startcolor+'deg;--end:'+endcolor+'deg;}');
+
+
+
           $('#weather').text(response.weather[0].description);
           $('#bgcolor').removeAttr('class').addClass('w'+response.weather[0].id);
+          wind_angle = response.wind.deg;
+          wind_speed = response.wind.speed;
         },
         error: function(error){
           console.log(error);
@@ -139,27 +206,123 @@ function _draw()
 
 
 
-
-
   </script>
   <style>
 
+  @font-face {
+      font-family: 'archivo';
+      src: url('res/archivo-black-webfont.woff2') format('woff2'),
+           url('res/archivo-black-webfont.woff') format('woff');
+      font-weight: bold;
+      font-style: normal;
+  }
+
+  @font-face {
+      font-family: 'archivo';
+      src: url('res/archivo-regular-webfont.woff2') format('woff2'),
+           url('res/archivo-regular-webfont.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+  }
+body{font-family: 'Archivo','Arial','Helvetica','Roboto',sans-serif; }
 div#map{position:fixed; top:0; left:0; right:0; bottom:0; background:#eee;}
-div#bgcolor{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(255,100,200,0.2);}
-div.ctr{position:absolute; top:100px; left:100px; background:#eee; padding:40px;}
+div#bgcolor{position:fixed; top:0; left:0; right:0; bottom:0;
+  background:linear-gradient(320deg, hsl(var(--start) 100% 7.06% / 66%) 0%, hsl(var(--end) 100% 50% / 30%) 100%);}
+
 div.anim{position:fixed; top:0; left:0; right:0; bottom:0;}
-  </style>
+span.weather{display:block; position:fixed; top:0; left:0; right:0; color:rgba(255,255,255,0.3); font-size:15vw; font-weight:bold;
+text-transform:uppercase;}
+
+div.ctr{position:fixed; bottom:0; left:0; right:0;}
+a.city-link{display:inline-block; font-size:0.8em; padding:0.5em 1em; border:1px solid #fff;
+  text-decoration: none; margin:0 10px 10px 0; transition:0.5s all;}
+a.city-link:link{color:#fff;}
+a.city-link:visited{color:#fff;}
+a.city-link:hover{color:#0cf;}
+
+/*
+.city-link {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px;
+}
+
+.city-link {
+  color: #fff;
+  text-decoration: none;
+  padding: 10px;
+  background-color: #333;
+  border-radius: 5px;
+  margin-right:0px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}*/
+</style>
 </head>
 <body>
 
+
 <div id="map" data-locx="47.502617" data-locy="19.053965" class="olMap"></div>
-<div id="bgcolor"><span id="weather"></span></div>
+<div id="bgcolor"><span class="weather" id="weather"></span></div>
 <div class="anim"><canvas id="canvas"></div>
 <div class="ctr">
-  <a href="javascript:_move(47.502617,19.053965)">Budapest</a>
-  <a href="javascript:_move(37.187652,-93.2597524)">Springfield</a>
-  <a href="javascript:_move(36.5601757,-87.6580784)">Clarcksville</a>
+  <a href="javascript:_move(47.502617,19.053965)"class="city-link">Budapest</a>
+  <a href="javascript:_move(37.187652,-93.2597524)"class="city-link">Springfield</a>
+  <a href="javascript:_move(36.5601757,-87.6580784)"class="city-link">Clarcksville</a>
+  <a href="javascript:_move(51.5074,-0.1278)"class="city-link">London</a>
+  <a href="javascript:_move(35.6895,139.6917)"class="city-link">Tokyo</a>
+  <a href="javascript:_move(40.7128,-74.0060)"class="city-link">New York City</a>
+  <a href="javascript:_move(55.7558,37.6173)"class="city-link">Moscow</a>
+  <a href="javascript:_move(52.5200,13.4050)"class="city-link">Berlin</a>
+  <a href="javascript:_move(48.8566,2.3522)"class="city-link">Paris</a>
+  <a href="javascript:_move(22.3193,114.1694)"class="city-link">Hong Kong</a>
+  <a href="javascript:_move(37.7749,-122.4194)"class="city-link">San Francisco</a>
+  <a href="javascript:_move(-33.8650,151.2094)"class="city-link">Sydney</a>
+  <a href="javascript:_move(35.1796,129.0756)"class="city-link">Busan</a>
+  <a href="javascript:_move(40.4168,-3.7038)"class="city-link">Madrid</a>
+  <a href="javascript:_move(43.6532,-79.3832)"class="city-link">Toronto</a>
+  <a href="javascript:_move(19.4326,-99.1332)"class="city-link">Mexico City</a>
+  <a href="javascript:_move(28.6139,77.2090)"class="city-link">New Delhi</a>
+  <a href="javascript:_move(55.6761,12.5683)"class="city-link">Copenhagen</a>
+  <a href="javascript:_move(-33.4489,-70.6693)"class="city-link">Santiago</a>
+  <a href="javascript:_move(25.2048,55.2708)"class="city-link">Dubai</a>
+  <a href="javascript:_move(48.2082,16.3738)"class="city-link">Vienna</a>
+  <a href="javascript:_move(39.099724,-94.578331)" class="city-link">Kansas City</a>
+  <a href="javascript:_move(34.052235,-118.243683)"class="city-link">Los Angeles</a>
+  <a href="javascript:_move(41.878113,-87.629799)"class="city-link">Chicago</a>
+  <a href="javascript:_move(29.760427,-95.369804)"class="city-link">Houston</a>
+<a href="javascript:_move(33.448376,-112.074036)"class="city-link">Phoenix</a>
+<a href="javascript:_move(42.360081,-71.058884)"class="city-link">Boston</a>
+<a href="javascript:_move(39.952584,-75.165222)"class="city-link">Philadelphia</a>
+<a href="javascript:_move(32.715736,-117.161087)"class="city-link">San Diego</a>
+<a href="javascript:_move(47.606209,-122.332071)"class="city-link">Seattle</a>
+<a href="javascript:_move(33.749001,-84.387978)"class="city-link">Atlanta</a>
+<a href="javascript:_move(38.907192,-77.036871)"class="city-link">Washington</a>
+<a href="javascript:_move(42.331429,-83.045753)" class="city-link">Detroit</a>
+<a href="javascript:_move(38.252665,-85.758456)"class="city-link">Louisville</a>
+<a href="javascript:_move(30.267153,-97.743057)"class="city-link">Austin</a>
+<a href="javascript:_move(44.977753,-93.265011)"class="city-link">Minneapolis</a>
+<a href="javascript:_move(35.227087,-80.843127)"class="city-link">Charlotte</a>
+<a href="javascript:_move(39.290385,-76.612189)"class="city-link">Baltimore</a>
+<a href="javascript:_move(37.804363,-122.271111)"class="city-link">Oakland</a>
+<a href="javascript:_move(41.499321,-81.694359)"class="city-link">Cleveland</a>
+<a href="javascript:_move(39.768379,-86.158043)"class="city-link">Indianapolis</a>
+<a href="javascript:_move(36.162664,-86.781602)"class="city-link">Nashville</a>
+<a href="javascript:_move(32.776665,-96.796989)"class="city-link">Dallas</a>
+<a href="javascript:_move(39.739235,-104.990250)"class="city-link">Denver</a>
+<a href="javascript:_move(35.149534,-90.048981)"class="city-link">Memphis</a>
+<a href="javascript:_move(38.627003,-90.199402)"class="city-link">St. Louis</a>
+<a href="javascript:_move(39.961178,-82.998795)"class="city-link">Columbus</a>
 </div>
+
+<style id="bgcolors">
+  :root{
+    --start:225deg;
+    --end:179.29deg;
+  }
+<style>
 
 </body>
 </html>
