@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang-"en">
+<head>
+  <title>weather</title>
+  <script src="res/jquery.js"></script>
+  <script src="res/OpenLayers.js"></script>
+  <script>
+
+  var canvas = false;
+  var ctx = false;
+
+function _draw()
+{
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for(var i=0; i<100; i++)
+  {
+    ctx.beginPath();
+    ctx.arc(Math.random()*1000, Math.random()*1000, Math.random()*100, 0, 2 * Math.PI, false);
+    ctx.strokeStyle = '#003300';
+    ctx.stroke();
+  }
+
+}
+
+//------------------------------------------------------------
+  function _weather(lat,lon)
+  {
+    var key = '44ae9c15d8266f46d0d30961f8c06d90';
+    var url = 'https://api.openweathermap.org/data/2.5/weather?lat='+lat+'&lon='+lon+'&appid='+key;
+    var xhr = $.ajax({
+        type:'post',
+        url:url,
+        /*headers : heads,*/
+        success: function(response){
+          console.log(response);
+          console.log(response.weather[0].id);
+          console.log(response.weather[0].description);
+          $('#weather').text(response.weather[0].description);
+          $('#bgcolor').removeAttr('class').addClass('w'+response.weather[0].id);
+        },
+        error: function(error){
+          console.log(error);
+        }
+      });
+  }
+
+
+    //------------------------------------------------------------
+    function _bsLoc()
+    {
+      navigator.geolocation.getCurrentPosition(function(pos){
+        const crd = pos.coords;
+        console.log(crd);
+        $('#map').attr('data-locx',crd.latitude);
+        $('#map').attr('data-locy',crd.longitude);
+        _weather(crd.latitude,crd.longitude);
+        _bsMap();
+      },
+      function(err){
+        console.warn(`ERROR(${err.code}): ${err.message}`);
+        _bsMap();
+      },
+      {
+       enableHighAccuracy: true,
+       timeout: 5000,
+       maximumAge: 0,
+     });
+    }
+
+
+    var map = false;
+    var fromProjection = new OpenLayers.Projection('EPSG:4326');   // Transform from WGS 1984
+    var toProjection   = new OpenLayers.Projection('EPSG:900913'); // to Spherical Mercator Projection
+
+    function _bsMap()
+    {
+      var m = $('#map')
+        var zoom = 10;
+        var markerdata = [[m.attr('data-locx'),m.attr('data-locy')]];
+        var markers = false;
+        var icon = new OpenLayers.Icon('res/marker.png', new OpenLayers.Size(41,49), new OpenLayers.Pixel(-20, -25));
+
+        function _setMarkers()
+        {
+
+          $(markerdata).each(function(i,item){
+            var position = new OpenLayers.LonLat(item[1],item[0]).transform( fromProjection, toProjection);
+            var marker = new OpenLayers.Marker(position,icon);
+            marker.custData = {'mid':'qwe3455677'};
+            marker.events.register("click", marker, function(e,i) {
+                //console.log(this.custData);
+                //alert('Clicked');
+              });
+            markers.addMarker(marker);
+            map.setCenter(position);
+          });
+          //map.zoomToExtent(markers.getDataExtent());
+
+         }
+         function map_init()
+         {
+           map = new OpenLayers.Map({div:'map',zoom:zoom});
+           var mapnik = new OpenLayers.Layer.OSM();
+           markers = new OpenLayers.Layer.Markers('Markers');
+           map.addLayer(markers);
+           map.addLayer(mapnik);
+           _setMarkers();
+           return(map);
+         }
+        setTimeout(function(){map_init();},1000);
+    }
+
+    function _move(x,y)
+    {
+      var position = new OpenLayers.LonLat(y,x).transform( fromProjection, toProjection);
+      map.setCenter(position);
+      _weather(x,y);
+    }
+
+    function _adjustCanvas()
+    {
+      canvas.width = $('.anim').width();
+      canvas.height = $('.anim').height();
+
+    }
+
+    $(document).ready(function(){
+      _bsLoc();
+      canvas = document.getElementById('canvas');
+      ctx = canvas.getContext('2d');
+      _adjustCanvas();
+      $(window).resize(function(){
+        _adjustCanvas();
+      });
+
+     setInterval(function(){_draw()},100);
+
+    });
+
+
+
+
+
+  </script>
+  <style>
+
+div#map{position:fixed; top:0; left:0; right:0; bottom:0; background:#eee;}
+div#bgcolor{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(255,100,200,0.2);}
+div.ctr{position:absolute; top:100px; left:100px; background:#eee; padding:40px;}
+div.anim{position:fixed; top:0; left:0; right:0; bottom:0;}
+  </style>
+</head>
+<body>
+
+<div id="map" data-locx="47.502617" data-locy="19.053965" class="olMap"></div>
+<div id="bgcolor"><span id="weather"></span></div>
+<div class="anim"><canvas id="canvas"></div>
+<div class="ctr">
+  <a href="javascript:_move(47.502617,19.053965)">Budapest</a>
+  <a href="javascript:_move(37.187652,-93.2597524)">Springfield</a>
+  <a href="javascript:_move(36.5601757,-87.6580784)">Clarcksville</a>
+</div>
+
+</body>
+</html>
